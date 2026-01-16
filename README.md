@@ -1,6 +1,6 @@
 # Video Grid
 
-**Video Grid** is a lightweight, single-file HTML5 application that generates professional video contact sheets (thumbnail grids) directly in your web browser. It requires no server uploads, no installation, and runs completely offline.
+**Video Grid** is a lightweight, single-file HTML5 application that generates professional video thumbnail grids in your web browser! It requires no server uploads, no installation, and runs completely offline.
 
 ## 🚀 Features
 
