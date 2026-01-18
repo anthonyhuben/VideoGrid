@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Grid 1.0</title>
+    <title>Video Grid 0.2</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -209,6 +209,25 @@
             border-color: var(--accent-color);
             color: white;
             font-weight: 600;
+        }
+
+        /* Checkbox styling */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-color);
+            cursor: pointer;
+        }
+        .checkbox-label {
+            margin: 0 !important;
+            font-weight: 400 !important;
+            color: #ddd !important;
+            cursor: pointer;
         }
 
         /* --- Stats Box --- */
@@ -459,7 +478,6 @@
         </div>
 
         <div class="control-row settings-grid">
-            
             <div class="control-group" style="flex: 2;">
                 <label>Output Resolution Scale</label>
                 <div class="scale-selector" id="scaleOptions">
@@ -478,7 +496,29 @@
             </div>
 
             <div class="control-group" style="align-self: flex-end; margin-left: auto;">
-                <button id="saveBtn" class="success" disabled>Download PNG</button>
+                <button id="saveBtn" class="success" disabled>Download Image</button>
+            </div>
+        </div>
+
+        <!-- Export Options Row -->
+        <div class="control-row">
+            <div class="control-group">
+                <label for="exportFormat">Export Format</label>
+                <select id="exportFormat" style="min-width: 140px;">
+                    <option value="image/webp" selected>WebP</option>
+                    <option value="image/png">PNG</option>
+                </select>
+            </div>
+
+            <div class="control-group" style="flex-direction: row; gap: 20px; align-items: flex-end; height: 100%;">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="optAntialias" checked>
+                    <label for="optAntialias" class="checkbox-label">Antialias Edges</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="optSmooth">
+                    <label for="optSmooth" class="checkbox-label">Extra Smooth Images</label>
+                </div>
             </div>
         </div>
     </div>
@@ -565,6 +605,9 @@
         // Settings Elements
         const scaleChips = document.querySelectorAll('.scale-chip');
         const selectedScaleInput = document.getElementById('selectedScale');
+        const exportFormatSelect = document.getElementById('exportFormat');
+        const optAntialias = document.getElementById('optAntialias');
+        const optSmooth = document.getElementById('optSmooth');
 
         // Modal Elements
         const editModal = document.getElementById('editModal');
@@ -585,7 +628,7 @@
         let videoMeta = {
             duration: 0,
             size: 0,
-            bitrateMBs: 0, // Changed to MB/s
+            bitrateMBs: 0,
             framesEst: 0
         };
 
@@ -642,7 +685,6 @@
                 videoRuntimeDisplay.innerText = `${formatDurationExtended(videoMeta.duration)} (${videoMeta.framesEst.toLocaleString()} Frames)`;
                 videoResolutionDisplay.innerText = `${hiddenVideo.videoWidth} × ${hiddenVideo.videoHeight}`;
                 videoSizeDisplay.innerText = formatBytes(file.size);
-                // Updated to MB/s
                 videoBitrateDisplay.innerText = `${videoMeta.bitrateMBs.toFixed(2)} MB/s`;
 
                 statusEl.textContent = `Loaded: ${file.name} | Duration: ${formatTime(hiddenVideo.duration)}`;
@@ -810,6 +852,11 @@
             const rows = parseInt(gridRowsSelect.value);
             const scale = parseFloat(selectedScaleInput.value);
             
+            // Export Options
+            let format = exportFormatSelect.value;
+            const useAA = optAntialias.checked;
+            const useSmooth = optSmooth.checked;
+            
             const baseW = gridData[0].canvas.width;
             const baseH = gridData[0].canvas.height;
             
@@ -831,6 +878,16 @@
             
             const ctx = outputCanvas.getContext('2d');
             
+            // --- APPLY EXPORT SETTINGS ---
+            
+            // Antialias: imageSmoothingEnabled (true = smooth, false = pixelated)
+            ctx.imageSmoothingEnabled = useAA;
+            
+            // Extra Smooth: imageSmoothingQuality ('low', 'medium', 'high')
+            ctx.imageSmoothingQuality = useSmooth ? 'high' : 'medium';
+            
+            // --- DRAW CANVAS ---
+            
             // Background
             ctx.fillStyle = "#111111";
             ctx.fillRect(0, 0, finalW, finalH);
@@ -842,7 +899,6 @@
             
             const resolutionStr = `${hiddenVideo.videoWidth} × ${hiddenVideo.videoHeight}`;
             
-            // Updated to use MB/s
             const meta1 = `Resolution: ${resolutionStr}  |  File Size: ${formatBytes(videoMeta.size)}  |  Bitrate: ${videoMeta.bitrateMBs.toFixed(2)} MB/s`;
             const meta2 = `Runtime: ${formatDurationExtended(videoMeta.duration)}  |  Frames: ${videoMeta.framesEst.toLocaleString()}`;
             
@@ -926,15 +982,29 @@
                 ctx.fillText(timeStr, badgeX + (tsFontSize/4), badgeY + (tsFontSize/4));
             });
             
+            // --- HANDLE FORMATS ---
+            
+            // Map extension
+            let ext = 'png';
+            if (format === 'image/webp') { ext = 'webp'; }
+
+            // Quality setting for lossy formats (WebP)
+            // 0.92 is a high quality default. PNG ignores this.
+            const quality = 0.92;
+
             outputCanvas.toBlob(blob => {
+                if (!blob) {
+                    statusEl.textContent = "Error generating image. Try a different format.";
+                    return;
+                }
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `${titleText.replace(/\s+/g, '_')}.png`;
+                a.download = `${videoTitleEdit.value.replace(/\s+/g, '_')}.${ext}`;
                 a.click();
                 URL.revokeObjectURL(url);
                 statusEl.textContent = "Download started!";
-            });
+            }, format, quality);
         });
 
         // Utilities
