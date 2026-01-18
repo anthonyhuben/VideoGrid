@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Grid 0.2</title>
+    <title>Video Grid 1.0</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -437,8 +437,8 @@
         
         <div class="control-row">
             <div class="control-group">
-                <label for="videoInput">Select Video (MP4 or MOV Only)</label>
-                <input type="file" id="videoInput" accept="video/mp4">
+                <label for="videoInput">Select Video</label>
+                <input type="file" id="videoInput" accept="video/*">
             </div>
 
             <div class="control-group">
@@ -505,8 +505,8 @@
             <div class="control-group">
                 <label for="exportFormat">Export Format</label>
                 <select id="exportFormat" style="min-width: 140px;">
-                    <option value="image/webp" selected>WebP</option>
-                    <option value="image/png">PNG</option>
+                    <option value="image/png" selected>PNG (Lossless)</option>
+                    <option value="image/webp">WebP (Modern)</option>
                 </select>
             </div>
 
@@ -523,7 +523,7 @@
         </div>
     </div>
 
-    <div class="status-bar" id="status">Ready. Select an MP4 file.</div>
+    <div class="status-bar" id="status">Ready. Select a video file.</div>
 
     <div id="grid-container"></div>
 
@@ -647,8 +647,9 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            if (file.type !== 'video/mp4') {
-                alert("Please select a video file in MP4 or MOV format.");
+            // Check if the file type is generally a video supported by the browser
+            if (!file.type.startsWith('video/')) {
+                alert("Please select a valid video file supported by your browser (MP4, MOV, or WebM).");
                 videoInput.value = '';
                 return;
             }
