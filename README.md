@@ -40,7 +40,7 @@
 * **Edit Frames:** Click on any specific image in the grid to open the **Frame Editor**. You can seek to a better moment and update just that thumbnail.
 
 
-5. **Export:** Select your desired output scale (default is optimized for 1080p viewing) and click **Download PNG**.
+5. **Export:** Select your desired output scale (default is optimized for 1080p videos) and click **Download PNG**.
 
 ## ⚙️ Technical Details
 
