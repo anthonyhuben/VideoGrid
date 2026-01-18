@@ -437,7 +437,7 @@
         
         <div class="control-row">
             <div class="control-group">
-                <label for="videoInput">Select Video (MP4 Only)</label>
+                <label for="videoInput">Select Video (MP4 or MOV Only)</label>
                 <input type="file" id="videoInput" accept="video/mp4">
             </div>
 
@@ -648,7 +648,7 @@
             if (!file) return;
 
             if (file.type !== 'video/mp4') {
-                alert("Please select a valid MP4 file. MKV and other formats are not supported.");
+                alert("Please select a video file in MP4 or MOV format.");
                 videoInput.value = '';
                 return;
             }
