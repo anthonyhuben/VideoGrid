@@ -877,7 +877,7 @@
                     <div class="control-group">
                         <label>Font Family</label>
                         <select id="outputFontFamily">
-                            <option value="Segoe UI, Arial, sans-serif">Segoe UI (Default)</option>
+                            <option value="Segoe UI, Arial, sans-serif">Segoe UI</option>
                             <option value="Arial, Helvetica, sans-serif">Arial</option>
                             <option value="Helvetica Neue, Helvetica, sans-serif">Helvetica</option>
                             <option value="Georgia, serif">Georgia</option>
@@ -901,9 +901,11 @@
                         <label>Grid Gap</label>
                         <select id="outputGridGap">
                             <option value="0">None</option>
-                            <option value="10">Small</option>
-                            <option value="20" selected>Medium</option>
-                            <option value="40">Large</option>
+                            <option value="50">Tiny</option>
+                            <option value="75" selected>Medium</option>
+                            <option value="100">Wide</option>
+                            <option value="150">Extra Wide</option>
+                            <option value="200">Postcard</option>
                         </select>
                     </div>
                     <div class="checkbox-group" style="align-self: center;">
@@ -911,7 +913,7 @@
                         <label for="outputShowTimestamps" class="checkbox-label">Show Timestamps</label>
                     </div>
                     <div class="checkbox-group" style="align-self: center;">
-                        <input type="checkbox" id="outputRoundedCorners">
+                        <input type="checkbox" id="outputRoundedCorners" checked>
                         <label for="outputRoundedCorners" class="checkbox-label">Rounded Corners</label>
                     </div>
                 </div>
@@ -923,8 +925,8 @@
             <div class="control-group">
                 <label for="exportFormat">Export Format</label>
                 <select id="exportFormat" style="min-width: 140px;">
-                    <option value="image/webp" selected>WebP (Smaller)</option>
-                    <option value="image/png">PNG (Lossless)</option>
+                    <option value="image/webp" selected>WebP</option>
+                    <option value="image/png">PNG</option>
                     <option value="image/jpeg">JPEG</option>
                 </select>
             </div>
@@ -958,7 +960,7 @@
                     <label for="optAntialias" class="checkbox-label">Antialias</label>
                 </div>
                 <div class="checkbox-group">
-                    <input type="checkbox" id="optSmooth">
+                    <input type="checkbox" id="optSmooth" checked>
                     <label for="optSmooth" class="checkbox-label">Extra Smooth</label>
                 </div>
             </div>
