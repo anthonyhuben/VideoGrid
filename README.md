@@ -1,89 +1,96 @@
-# Video Grid 0.3
+# 🎞️ Video Grid 0.3
 
-**Video Grid 0.3** is a powerful, client-side web application that generates high-quality thumbnail contact sheets (grids) from video files. It runs entirely in your browser using HTML5, CSS3, and Vanilla JavaScript, requiring no server uploads and ensuring your video files remain private on your local machine.
+**Video Grid 0.3** is a high-performance, 100% client-side web application designed to generate professional thumbnail contact sheets (video grids) directly in your browser. By leveraging the power of modern HTML5 APIs and Vanilla JavaScript, it eliminates the need for server-side processing, ensuring your media remains private and secure on your local machine.
 
-## Features
+![Privacy First](https://img.shields.io/badge/Privacy-100%25_Local-brightgreen)
+![Tech Stack](https://img.shields.io/badge/Stack-Vanilla_JS_|_HTML5_|_CSS3-blue)
+![License](https://img.shields.io/badge/License-MIT-orange)
 
-- **Client-Side Processing**: All video processing happens locally in your browser. No data is uploaded to any server.
-- **Automatic Metadata Detection**: Automatically detects video resolution, frame rate (FPS), codec, bitrate, and duration.
-- **Smart Resolution Scaling**: Automatically suggests optimal output scales based on input resolution (e.g., 8K, 4K, 1080p) to balance quality and file size.
-- **Customizable Grid Layout**: Choose any number of columns (2-12) and rows (2-13).
-- **Frame-Level Editing**:
-  - Click any thumbnail to fine-tune the exact timestamp.
-  - Add custom text overlays to individual frames.
-- **Extensive Styling Options**:
-  - **Auto-Style Detection**: Analyzes video colors to recommend the best color palette (Light, Dark, Warm, Cool, etc.).
-  - **50+ Color Presets**: categorized into Dark, Light, Warm, Cool, Nature, and Vibrant themes.
-  - **Custom Typography**: Upload your own font files (.ttf, .otf, .woff) or choose from a wide list of web-safe fonts.
-  - **UI Theming**: Switch the application interface between Ocean, Slate, Dark, Cyberpunk, Retro Terminal, and Light modes.
-- **Flexible Export**:
-  - Formats: WebP, JPEG, PNG.
-  - Quality control (70% - 100%).
-  - Options for timestamps, rounded corners, and grid gaps.
+---
 
-## Installation & Usage
+## ✨ Key Features
 
-### Installation
+### 🚀 Performance & Privacy
+*   **Zero Server Uploads**: Processing happens entirely in your browser's memory using the Canvas and Video APIs.
+*   **Instant Start**: No installation, no `npm install`, and no dependencies. Just one HTML file.
+*   **Hardware Accelerated**: Uses your local GPU for video decoding and frame rendering.
 
-No installation is required. Video Grid 0.3 is a single, self-contained HTML file.
+### 📊 Advanced Metadata Detection
+Automatically extract and display technical data in the header:
+*   **Resolution & Aspect Ratio**: Detects everything from SD to 8K.
+*   **Smart FPS Detection**: Uses the `requestVideoFrameCallback` API for precise frame rate calculation.
+*   **Bitrate & Codec**: Estimates video bitrate (MB/s and kbps) and identifies common codecs (H.264, H.265, VP9, etc.).
 
-1.  Download the `index.html` file.
-2.  Open the file in any modern web browser (Chrome, Firefox, Edge, Safari).
+### 🎨 Intelligent Styling
+*   **Auto-Style Detection**: Analyzes the color distribution of the video to recommend the perfect color palette.
+*   **50+ Color Presets**: Categorized themes including *Midnight, Arctic, Sepia, Cyberpunk, Forest,* and *Vapor*.
+*   **Custom Typography**: Use system fonts, web-safe fonts, or upload your own `.ttf` or `.otf` files to brand your contact sheets.
+*   **UI Themes**: Match your workspace with *Ocean, Slate, Retro Terminal, Cyberpunk,* and more.
 
-### Quick Start Guide
+### 🛠️ Precision Editing
+*   **Frame-Level Tuning**: Click any thumbnail to adjust its exact timestamp using a slider or manual input.
+*   **Custom Overlays**: Add unique text labels to individual frames (e.g., "Intro," "Final Scene").
+*   **Responsive Scaling**: Smart "Output Resolution Scale" suggestions based on source quality to balance file size and clarity.
 
-1.  **Load Video**: Click "Select Video" and choose a file from your computer.
-2.  **Configure Grid**:
-    *   Adjust the **Columns** and **Rows** selectors to set the grid size.
-    *   The **Output Resolution Scale** is auto-selected based on your video's resolution (e.g., 12.5% for 1080p). You can manually change this using the chips.
-3.  **Generate**: Click the **Generate** button. The app will capture frames from the video and display them in the grid.
-4.  **Edit Frames (Optional)**:
-    *   Hover over any thumbnail and click it to open the editor.
-    *   Use the slider or manual input to change the timestamp.
-    *   Enter custom text in the "Custom Text" field to add overlays (e.g., "Scene 1").
-    *   Click "Update Thumbnail" to save changes.
-5.  **Style Output**:
-    *   Expand the "🎨 Output Image Style" section.
-    *   Click on **Preset Chips** to change the color scheme instantly.
-    *   Adjust colors manually using the color pickers.
-    *   Select a font family or upload a custom font file.
-    *   Toggle options like "Timestamps," "Rounded Corners," or "Grid Gap."
-6.  **Export**:
-    *   Select your desired **Export Format** (WebP recommended for quality/size balance).
-    *   Set the **Quality**.
-    *   Click **Download Image**.
+---
 
-## Output Styling
+## 🚀 Quick Start Guide
 
-The application provides granular control over the final image's appearance:
+### 1. Launch
+Simply open `index.html` in any modern web browser (Chrome or Edge recommended for best codec support).
 
-- **Background & Text Colors**: Manually set the background, title, metadata, and timestamp colors.
-- **Typography**:
-    - **Font Family**: Choose from Sans-Serif, Serif, Monospace, Display, or System fonts.
-    - **Custom Fonts**: Click "Upload Font File..." to use your own .ttf or .otf files.
-    - **Title Weight**: Adjust the boldness of the main title.
-- **Layout Options**:
-    - **Grid Gap**: Adjust the spacing between thumbnails (None to Postcard).
-    - **Rounded Corners**: Apply rounded corners to thumbnails and badges.
-    - **Timestamps**: Toggle the visibility of timecodes on thumbnails.
+### 2. Configure
+1.  **Select Video**: Click the input button to load your local file.
+2.  **Layout**: Choose your grid dimensions (e.g., 5 columns × 6 rows).
+3.  **Scale**: Use the recommended "Auto-select scale" or pick a custom chip (e.g., 12.5% for 1080p).
+4.  **Generate**: Hit the **Generate** button to populate the grid.
 
-## System Requirements
+### 3. Customize & Export
+1.  **Edit**: Hover over a frame to fine-tune the time or add text.
+2.  **Style**: Expand the **🎨 Output Image Style** section. Choose a preset or manually set colors.
+3.  **Download**: Select your format (WebP is best for quality/size) and click **Download Image**.
 
-- **Browser**: A modern browser with support for HTML5 Video, Canvas API, and ES6+ JavaScript.
-    - Recommended: Google Chrome, Microsoft Edge, Mozilla Firefox, Safari (latest versions).
-- **Memory**: Processing large 4K or 8K videos requires a significant amount of RAM (8GB+ recommended for 4K).
+---
 
-## Known Limitations
+## 🎨 Styling Presets Reference
 
-- **Performance**: Generating grids for very long videos (hours) at high resolutions may be slow due to browser memory limits.
-- **FPS Detection**: While the app attempts to detect the exact FPS using the `requestVideoFrameCallback` API, it may fall back to estimates (filename analysis or standard defaults) if the browser restricts access or the video format is unusual.
-- **Video Codecs**: Browser support for decoding video depends on the underlying OS and browser installation (e.g., HEVC/H.265 support may vary on Windows vs. macOS).
+The application includes over 50 handcrafted color presets. Here are some of the popular categories:
 
-## Technical Details
+| Category | Recommended For... | Key Presets |
+| :--- | :--- | :--- |
+| **Dark** | High-contrast cinematic shots | Noir, Obsidian, Abyss, Graphite |
+| **Light** | Clean, professional documentation | Paper, Snow, Minimal, Arctic |
+| **Warm** | Landscapes, sunsets, and autumn film | Sepia, Sunset, Ember, Coffee |
+| **Cool** | Tech reviews, water scenes, and sci-fi | Ocean, Slate, Twilight, Steel |
+| **Vibrant** | Creative projects and music videos | Cyberpunk, Synthwave, Neon, Toxic |
 
-- **Version**: 0.3
-- **Tech Stack**: HTML5, CSS3, Vanilla JavaScript (No frameworks).
-- **Core Logic**:
-    - Uses `HTMLVideoElement` to decode video frames.
-    - Uses `HTMLCanvasElement` to capture, scale, and draw the final grid.
-    - Uses `Blob` and `URL.createObjectURL` to handle file downloads.
+---
+
+## 🛠️ Technical Details
+
+Video Grid 0.3 is built using a "No-Framework" philosophy to maximize speed and compatibility.
+
+### Core Logic
+*   **Frame Capture**: Uses `HTMLVideoElement` seeking and `drawImage()` into a temporary `CanvasRenderingContext2D`.
+*   **Font Handling**: Implements the `FontFace` API to allow real-time custom font injections.
+*   **Memory Management**: Efficiently handles `Blob` objects and `URL.createObjectURL` for exporting high-resolution images.
+
+### Math & Calculations
+Grid dimensions and text scaling are calculated dynamically. For example, the header height is scaled based on the thumbnail height:
+$$ \text{HeaderHeight} = \text{ThumbHeight} \times 0.8 $$
+The font size is automatically calculated to fit the widest line of text within the grid width:
+$$ \text{FontSize} = \min(\text{sizeTitle}, \text{sizeMeta1}, \text{sizeMeta2}) $$
+
+---
+
+## 💻 System Requirements
+
+*   **Browser**: Modern Chromium-based browsers (Chrome, Edge, Opera) offer the best support for HEVC and high-res video.
+*   **Memory**: While the app is lightweight, processing 4K/8K video requires at least 8GB of RAM for smooth performance.
+*   **Codecs**: Support depends on your OS and browser. If a video won't play, ensure you have the necessary system-level extensions (like "HEVC Video Extensions" for Windows).
+
+---
+
+## 📄 License
+
+Video Grid 0.3 is released under the **MIT License**. You are free to use, modify, and distribute the application for personal and commercial use.
