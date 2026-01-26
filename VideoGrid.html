@@ -1195,6 +1195,7 @@
                     <option value="image/jpeg">JPEG</option>
                     <option value="image/png">PNG</option>
                     <option value="image/bmp">BMP</option>
+                    <option value="text/html">HTML</option>
                 </select>
             </div>
 
@@ -2886,19 +2887,33 @@
             if (format === 'image/jpeg') ext = 'jpg';
             if (format === 'image/bmp') ext = 'bmp';
 
-            outputCanvas.toBlob(blob => {
-                if (!blob) {
-                    statusEl.textContent = "Error generating image. Try a different format.";
-                    return;
-                }
+            if (format === 'text/html') {
+                // HTML Export
+                const htmlContent = generateHTMLExport(outputCanvas, videoTitleEdit.value, videoMeta, gridData.length);
+                const blob = new Blob([htmlContent], { type: 'text/html' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `${videoTitleEdit.value.replace(/\s+/g, '_')}_grid.${ext}`;
+                a.download = `${videoTitleEdit.value.replace(/\s+/g, '_')}_grid.html`;
                 a.click();
                 URL.revokeObjectURL(url);
-                statusEl.textContent = `Download started! (${formatBytes(blob.size)})`;
-            }, format, quality);
+                statusEl.textContent = `HTML file downloaded! (${formatBytes(blob.size)})`;
+            } else {
+                // Image Export
+                outputCanvas.toBlob(blob => {
+                    if (!blob) {
+                        statusEl.textContent = "Error generating image. Try a different format.";
+                        return;
+                    }
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${videoTitleEdit.value.replace(/\s+/g, '_')}_grid.${ext}`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    statusEl.textContent = `Download started! (${formatBytes(blob.size)})`;
+                }, format, effectiveQuality);
+            }
         });
 
         // --- Helper Functions ---
@@ -2946,6 +2961,138 @@
             const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        function generateHTMLExport(canvas, title, meta, frameCount) {
+            const imgDataURL = canvas.toDataURL('image/webp');
+            
+            return `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${title} - Video Grid</title>
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    background-color: #1a1a1a;
+                    color: #f0f0f0;
+                    padding: 20px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    min-height: 100vh;
+                }
+                .container {
+                    max-width: 1400px;
+                    width: 100%;
+                }
+                h1 {
+                    text-align: center;
+                    margin-bottom: 20px;
+                    font-weight: 300;
+                    letter-spacing: 1px;
+                }
+                .info-panel {
+                    background: #2d2d2d;
+                    padding: 20px;
+                    border-radius: 8px;
+                    margin-bottom: 20px;
+                    border: 1px solid #444;
+                }
+                .info-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 10px;
+                    font-size: 0.95rem;
+                }
+                .info-row:last-child {
+                    margin-bottom: 0;
+                }
+                .info-label {
+                    color: #aaa;
+                    font-weight: 600;
+                }
+                .info-value {
+                    color: #f0f0f0;
+                }
+                .grid-image {
+                    width: 100%;
+                    height: auto;
+                    border-radius: 8px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                    display: block;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 30px;
+                    color: #666;
+                    font-size: 0.85rem;
+                }
+                @media print {
+                    body {
+                        background: white;
+                        color: black;
+                    }
+                    .info-panel {
+                        background: #f5f5f5;
+                        border: 1px solid #ddd;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>${title}</h1>
+                
+                <div class="info-panel">
+                    <div class="info-row">
+                        <span class="info-label">Resolution:</span>
+                        <span class="info-value">${meta.width} × ${meta.height}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Frame Rate:</span>
+                        <span class="info-value">${meta.fps ? meta.fps + ' fps' : 'Unknown'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Duration:</span>
+                        <span class="info-value">${formatDurationExtended(meta.duration)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Codec:</span>
+                        <span class="info-value">${meta.codec}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">File Size:</span>
+                        <span class="info-value">${formatBytes(meta.size)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Bitrate:</span>
+                        <span class="info-value">${meta.bitrateMBs.toFixed(2)} MB/s</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Total Frames:</span>
+                        <span class="info-value">${meta.framesEst.toLocaleString()}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Grid Frames:</span>
+                        <span class="info-value">${frameCount}</span>
+                    </div>
+                </div>
+                
+                <img src="${imgDataURL}" alt="${title} Grid" class="grid-image">
+                
+                <div class="footer">
+                    Generated by Video Grid • ${new Date().toLocaleDateString()}
+                </div>
+            </div>
+        </body>
+        </html>`;
         }
 
     </script>
