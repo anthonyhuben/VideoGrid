@@ -805,6 +805,76 @@
         .tooltip:hover::after {
             opacity: 1;
         }
+
+        /* Font Preview in Dropdown */
+        #outputFontFamily {
+            font-size: 1rem;
+        }
+
+        #outputFontFamily option {
+            padding: 8px 12px;
+            font-size: 1rem;
+        }
+
+        /* Sans-Serif Fonts */
+        #outputFontFamily option[value="Segoe UI, Arial, sans-serif"] { font-family: Segoe UI, Arial, sans-serif; }
+        #outputFontFamily option[value="Arial, Helvetica, sans-serif"] { font-family: Arial, Helvetica, sans-serif; }
+        #outputFontFamily option[value="Helvetica Neue, Helvetica, sans-serif"] { font-family: Helvetica Neue, Helvetica, sans-serif; }
+        #outputFontFamily option[value="Verdana, sans-serif"] { font-family: Verdana, sans-serif; }
+        #outputFontFamily option[value="Tahoma, sans-serif"] { font-family: Tahoma, sans-serif; }
+        #outputFontFamily option[value="Trebuchet MS, sans-serif"] { font-family: Trebuchet MS, sans-serif; }
+        #outputFontFamily option[value="Calibri, sans-serif"] { font-family: Calibri, sans-serif; }
+        #outputFontFamily option[value="Candara, sans-serif"] { font-family: Candara, sans-serif; }
+        #outputFontFamily option[value="Century Gothic, sans-serif"] { font-family: Century Gothic, sans-serif; }
+        #outputFontFamily option[value="Franklin Gothic Medium, sans-serif"] { font-family: Franklin Gothic Medium, sans-serif; }
+        #outputFontFamily option[value="Gill Sans, sans-serif"] { font-family: Gill Sans, sans-serif; }
+        #outputFontFamily option[value="Lucida Sans, Lucida Grande, sans-serif"] { font-family: Lucida Sans, Lucida Grande, sans-serif; }
+        #outputFontFamily option[value="Optima, sans-serif"] { font-family: Optima, sans-serif; }
+        #outputFontFamily option[value="Futura, sans-serif"] { font-family: Futura, sans-serif; }
+        #outputFontFamily option[value="Arial Black, sans-serif"] { font-family: Arial Black, sans-serif; }
+        #outputFontFamily option[value="Impact, sans-serif"] { font-family: Impact, sans-serif; }
+
+        /* Serif Fonts */
+        #outputFontFamily option[value="Georgia, serif"] { font-family: Georgia, serif; }
+        #outputFontFamily option[value="Times New Roman, serif"] { font-family: Times New Roman, serif; }
+        #outputFontFamily option[value="Palatino Linotype, Palatino, serif"] { font-family: Palatino Linotype, Palatino, serif; }
+        #outputFontFamily option[value="Book Antiqua, Palatino, serif"] { font-family: Book Antiqua, Palatino, serif; }
+        #outputFontFamily option[value="Garamond, serif"] { font-family: Garamond, serif; }
+        #outputFontFamily option[value="Cambria, serif"] { font-family: Cambria, serif; }
+        #outputFontFamily option[value="Constantia, serif"] { font-family: Constantia, serif; }
+        #outputFontFamily option[value="Didot, serif"] { font-family: Didot, serif; }
+        #outputFontFamily option[value="Baskerville, serif"] { font-family: Baskerville, serif; }
+        #outputFontFamily option[value="Hoefler Text, serif"] { font-family: Hoefler Text, serif; }
+        #outputFontFamily option[value="Bodoni MT, serif"] { font-family: Bodoni MT, serif; }
+        #outputFontFamily option[value="Rockwell, serif"] { font-family: Rockwell, serif; }
+        #outputFontFamily option[value="Copperplate, Copperplate Gothic Light, serif"] { font-family: Copperplate, Copperplate Gothic Light, serif; }
+
+        /* Monospace Fonts */
+        #outputFontFamily option[value="Courier New, monospace"] { font-family: Courier New, monospace; }
+        #outputFontFamily option[value="Consolas, monospace"] { font-family: Consolas, monospace; }
+        #outputFontFamily option[value="Lucida Console, Monaco, monospace"] { font-family: Lucida Console, Monaco, monospace; }
+        #outputFontFamily option[value="Monaco, monospace"] { font-family: Monaco, monospace; }
+        #outputFontFamily option[value="Menlo, monospace"] { font-family: Menlo, monospace; }
+        #outputFontFamily option[value="Source Code Pro, monospace"] { font-family: Source Code Pro, monospace; }
+        #outputFontFamily option[value="SF Mono, monospace"] { font-family: SF Mono, monospace; }
+        #outputFontFamily option[value="Andale Mono, monospace"] { font-family: Andale Mono, monospace; }
+
+        /* Display / Decorative Fonts */
+        #outputFontFamily option[value="Comic Sans MS, cursive"] { font-family: Comic Sans MS, cursive; }
+        #outputFontFamily option[value="Papyrus, fantasy"] { font-family: Papyrus, fantasy; }
+        #outputFontFamily option[value="Brush Script MT, cursive"] { font-family: Brush Script MT, cursive; }
+        #outputFontFamily option[value="Luminari, fantasy"] { font-family: Luminari, fantasy; }
+        #outputFontFamily option[value="Chalkduster, fantasy"] { font-family: Chalkduster, fantasy; }
+        #outputFontFamily option[value="Marker Felt, fantasy"] { font-family: Marker Felt, fantasy; }
+        #outputFontFamily option[value="Bradley Hand, cursive"] { font-family: Bradley Hand, cursive; }
+        #outputFontFamily option[value="Snell Roundhand, cursive"] { font-family: Snell Roundhand, cursive; }
+
+        /* System Fonts */
+        #outputFontFamily option[value="system-ui, sans-serif"] { font-family: system-ui, sans-serif; }
+        #outputFontFamily option[value="-apple-system, BlinkMacSystemFont, sans-serif"] { font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        #outputFontFamily option[value="ui-sans-serif, system-ui, sans-serif"] { font-family: ui-sans-serif, system-ui, sans-serif; }
+        #outputFontFamily option[value="ui-serif, Georgia, serif"] { font-family: ui-serif, Georgia, serif; }
+        #outputFontFamily option[value="ui-monospace, monospace"] { font-family: ui-monospace, monospace; }
     </style>
 </head>
 <body data-theme="ocean">
@@ -1652,14 +1722,29 @@
             });
         });
 
-        // Custom Font Handling
+        // Function to update select's displayed font
+        function updateFontSelectPreview() {
+            const selectedValue = outputFontFamily.value;
+            if (selectedValue === 'custom' && customFontLoaded) {
+                outputFontFamily.style.fontFamily = customFontFamily;
+            } else if (selectedValue !== 'custom') {
+                outputFontFamily.style.fontFamily = selectedValue;
+            } else {
+                outputFontFamily.style.fontFamily = 'inherit';
+            }
+        }
+
         outputFontFamily.addEventListener('change', (e) => {
             if (e.target.value === 'custom') {
                 customFontInput.click();
             } else {
                 customFontName.style.display = 'none';
             }
+            updateFontSelectPreview();
         });
+
+        // Initialize font preview on page load
+        updateFontSelectPreview();
 
         customFontInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
@@ -1689,6 +1774,7 @@
                 customFontName.style.display = 'block';
 
                 statusEl.textContent = `Font loaded: ${file.name}`;
+                updateFontSelectPreview();
             } catch (err) {
                 console.error('Font loading error:', err);
                 alert(`Failed to load font: ${err.message}`);
