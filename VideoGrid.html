@@ -1118,6 +1118,10 @@
                 <input type="checkbox" id="outputRoundedCorners" checked>
                 <label for="outputRoundedCorners" class="checkbox-label">Rounded</label>
             </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="outputCustomFontForFrames" checked>
+                <label for="outputCustomFontForFrames" class="checkbox-label">Use Custom Font for Frame Text</label>
+            </div>
         </div>
     </div>
         </div>
@@ -1323,6 +1327,7 @@
         const presetChips = document.querySelectorAll('.preset-chip');
         const customFontInput = document.getElementById('customFontInput');
         const customFontName = document.getElementById('customFontName');
+        const outputCustomFontForFrames = document.getElementById('outputCustomFontForFrames');
 
         // Collapsible
         const outputStyleHeader = document.getElementById('outputStyleHeader');
@@ -2404,6 +2409,10 @@
             const gapMultiplier = parseInt(outputGridGap.value);
             const showTimestamps = outputShowTimestamps.checked;
             const roundedCorners = outputRoundedCorners.checked;
+            const useCustomFontForFrames = outputCustomFontForFrames.checked;
+
+            // Determine font for frame text (timestamps and custom text)
+            const frameFontFamily = useCustomFontForFrames ? fontFamily : 'Arial, sans-serif';
             
             const baseW = gridData[0].canvas.width;
             const baseH = gridData[0].canvas.height;
@@ -2519,7 +2528,7 @@
                 // Draw timestamp badge
                 if (showTimestamps) {
                     const tsFontSize = Math.max(10, Math.floor(thumbH * 0.08)); 
-                    ctx.font = `bold ${tsFontSize}px Arial`;
+                    ctx.font = `bold ${tsFontSize}px ${frameFontFamily}`;
                     
                     const timeStr = formatTime(item.time);
                     const textMetrics = ctx.measureText(timeStr);
@@ -2548,7 +2557,7 @@
                 // Draw custom text overlay (top left)
                 if (item.customText && item.customText.length > 0) {
                     const txtFontSize = Math.max(10, Math.floor(thumbH * 0.08));
-                    ctx.font = `bold ${txtFontSize}px Arial`;
+                    ctx.font = `bold ${txtFontSize}px ${frameFontFamily}`;
                     
                     const customText = item.customText;
                     const txtMetrics = ctx.measureText(customText);
