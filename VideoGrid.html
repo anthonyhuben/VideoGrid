@@ -1759,66 +1759,144 @@
             if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
                 try {
                     const fps = await detectFPSWithCallback(video);
-                    if (fps && fps > 0 && fps < 120) return fps;
+                    if (fps && fps > 0 && fps < 240) return fps;
                 } catch (e) {
                     console.log('FPS detection via callback failed:', e);
                 }
             }
-            
-            // Method 2: Estimate from common frame rates based on duration patterns
+
+            // Method 2: Estimate from common frame rates based on filename
             return estimateFPS(video);
         }
 
         function detectFPSWithCallback(video) {
             return new Promise((resolve, reject) => {
                 const wasCurrentTime = video.currentTime;
-                const wasPaused = video.paused;
-                
-                let frameCount = 0;
-                let startTime = null;
+
+                const frameDurations = [];
                 let lastMediaTime = null;
-                const targetFrames = 15;
+                let firstPresentedFrames = null;
+                let lastPresentedFrames = null;
+                let startMediaTime = null;
+                const targetSamples = 60; // More samples for accuracy
+                let warmupFrames = 5; // Skip first few frames (playback stabilization)
+
                 const timeout = setTimeout(() => {
                     video.pause();
                     video.currentTime = wasCurrentTime;
                     reject(new Error('FPS detection timed out'));
-                }, 5000);
+                }, 10000);
 
                 function countFrame(now, metadata) {
-                    if (startTime === null) {
-                        startTime = metadata.mediaTime;
+                    // Skip warmup frames to let playback stabilize
+                    if (warmupFrames > 0) {
+                        warmupFrames--;
+                        lastMediaTime = metadata.mediaTime;
+                        video.requestVideoFrameCallback(countFrame);
+                        return;
                     }
-                    
-                    frameCount++;
+
+                    // Record first valid frame info
+                    if (startMediaTime === null) {
+                        startMediaTime = metadata.mediaTime;
+                        firstPresentedFrames = metadata.presentedFrames;
+                    }
+
+                    // Calculate frame duration if we have a previous frame
+                    if (lastMediaTime !== null) {
+                        const frameDuration = metadata.mediaTime - lastMediaTime;
+                        // Sanity check: frame duration should be between 1ms and 500ms
+                        if (frameDuration > 0.001 && frameDuration < 0.5) {
+                            frameDurations.push(frameDuration);
+                        }
+                    }
+
                     lastMediaTime = metadata.mediaTime;
-                    
-                    if (frameCount < targetFrames) {
+                    lastPresentedFrames = metadata.presentedFrames;
+
+                    if (frameDurations.length < targetSamples) {
                         video.requestVideoFrameCallback(countFrame);
                     } else {
                         clearTimeout(timeout);
-                        const elapsed = lastMediaTime - startTime;
-                        const fps = elapsed > 0 ? (frameCount - 1) / elapsed : null;
                         video.pause();
                         video.currentTime = wasCurrentTime;
-                        
-                        // Round to common frame rates
-                        if (fps) {
-                            const commonFps = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60];
-                            let closest = commonFps.reduce((a, b) => 
-                                Math.abs(b - fps) < Math.abs(a - fps) ? b : a
-                            );
-                            resolve(closest);
-                        } else {
-                            resolve(null);
+
+                        // Remove outliers (top and bottom 10%)
+                        const sorted = [...frameDurations].sort((a, b) => a - b);
+                        const trimCount = Math.floor(sorted.length * 0.1);
+                        const trimmed = sorted.slice(trimCount, sorted.length - trimCount);
+
+                        // Method A: Calculate from median frame duration (most robust)
+                        const medianDuration = trimmed[Math.floor(trimmed.length / 2)];
+                        const fpsFromMedian = 1 / medianDuration;
+
+                        // Method B: Calculate from average frame duration
+                        const avgDuration =
+                            trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
+                        const fpsFromAvg = 1 / avgDuration;
+
+                        // Method C: Calculate from presentedFrames count if available
+                        let fpsFromFrameCount = null;
+                        if (
+                            firstPresentedFrames !== null &&
+                            lastPresentedFrames !== null &&
+                            startMediaTime !== null
+                        ) {
+                            const totalFrames = lastPresentedFrames - firstPresentedFrames;
+                            const totalTime = lastMediaTime - startMediaTime;
+                            if (totalTime > 0 && totalFrames > 0) {
+                                fpsFromFrameCount = totalFrames / totalTime;
+                            }
                         }
+
+                        // Use frame count method if available, otherwise median
+                        const rawFps = fpsFromFrameCount || fpsFromMedian;
+
+                        console.log('FPS Detection Results:', {
+                            fpsFromMedian: fpsFromMedian.toFixed(3),
+                            fpsFromAvg: fpsFromAvg.toFixed(3),
+                            fpsFromFrameCount: fpsFromFrameCount?.toFixed(3) || 'N/A',
+                            rawFps: rawFps.toFixed(3),
+                            sampleCount: frameDurations.length,
+                            medianDuration: (medianDuration * 1000).toFixed(3) + 'ms',
+                        });
+
+                        // Common frame rates to snap to
+                        const commonFps = [
+                            23.976, 24, 25, 29.97, 30, 48, 50, 59.94, 60, 90, 120, 144,
+                        ];
+
+                        // Find closest common frame rate
+                        let closest = commonFps.reduce((a, b) =>
+                            Math.abs(b - rawFps) < Math.abs(a - rawFps) ? b : a
+                        );
+
+                        // Only snap if within 3% of a common frame rate
+                        const tolerance = 0.03;
+                        if (Math.abs(closest - rawFps) / rawFps > tolerance) {
+                            // Not close to a common rate, return rounded raw value
+                            closest = Math.round(rawFps * 100) / 100;
+                        }
+
+                        console.log(`Final FPS: ${closest} (raw: ${rawFps.toFixed(3)})`);
+                        resolve(closest);
                     }
                 }
 
-                video.currentTime = 0;
+                // Start from 1-2 seconds into the video to avoid intro anomalies
+                const startTime = Math.min(2, video.duration * 0.1);
+                video.currentTime = startTime;
                 video.muted = true;
-                video.play().then(() => {
-                    video.requestVideoFrameCallback(countFrame);
-                }).catch(reject);
+                video.playbackRate = 1.0; // Ensure normal playback speed
+
+                video.play()
+                    .then(() => {
+                        // Small delay to let playback fully stabilize
+                        setTimeout(() => {
+                            video.requestVideoFrameCallback(countFrame);
+                        }, 150);
+                    })
+                    .catch(reject);
             });
         }
 
