@@ -2181,7 +2181,9 @@
             let text = videoTitleEdit.value;
             text = text.replace(/\./g, ' ');
             text = text.replace(/\_/g, ' ');
-            text = text.replace(/\b(4k|1080p|480p|720p|2160p|8k|hdr|hevc|h264|h265|x264|x265|aac|dts|bluray|bdrip|webrip|webdl|hdtv)\b/gi, '');
+            text = text.replace(/\-/g, ' ');
+            text = text.replace(/\|/g, ' ');
+            text = text.replace(/\b(4k|1080p|1920x1080|480p|720p|2160p|8k|hdr|hevc|h264|h265|x264|x265|aac|dts|bluray|bdrip|webrip|webdl|hdtv)\b/gi, '');
             text = text.replace(/\s+/g, ' ').trim();
             videoTitleEdit.value = text;
         });
