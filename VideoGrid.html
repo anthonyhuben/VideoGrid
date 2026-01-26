@@ -964,7 +964,14 @@
         <!-- Output Style Customization -->
         <div class="control-row" style="flex-direction: column; align-items: stretch;">
             <div class="collapsible-header" id="outputStyleHeader" style="width: 100%;">
-                <label style="cursor: pointer; margin: 0;">🎨 Output Image Style</label>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <label style="cursor: pointer; margin: 0;">🎨 Output Image Style</label>
+                    <div class="checkbox-group" style="margin: 0;" onclick="event.stopPropagation();">
+                        <input type="checkbox" id="autoStyleToggle" checked>
+                        <label for="autoStyleToggle" class="checkbox-label">Auto-select style from video</label>
+                    </div>
+                    <span id="autoStyleIndicator" style="color: var(--success-color); font-size: 0.8rem; display: none;">✓ Auto-selected</span>
+                </div>
                 <span class="toggle-icon">▼</span>
             </div>
             <div class="output-preset-chips">
@@ -1496,6 +1503,181 @@
             }
         };
 
+        // --- Auto Style Detection ---
+        const autoStyleToggle = document.getElementById('autoStyleToggle');
+        const autoStyleIndicator = document.getElementById('autoStyleIndicator');
+
+        function analyzeCanvasColors(canvas) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Sample a grid of pixels for performance
+            const sampleSize = 50;
+            const stepX = Math.floor(width / sampleSize);
+            const stepY = Math.floor(height / sampleSize);
+            
+            let totalR = 0, totalG = 0, totalB = 0;
+            let totalBrightness = 0;
+            let totalSaturation = 0;
+            let hueSum = { r: 0, g: 0, b: 0, count: 0 };
+            let pixelCount = 0;
+            
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            
+            for (let y = 0; y < height; y += stepY) {
+                for (let x = 0; x < width; x += stepX) {
+                    const idx = (y * width + x) * 4;
+                    const r = data[idx];
+                    const g = data[idx + 1];
+                    const b = data[idx + 2];
+                    
+                    totalR += r;
+                    totalG += g;
+                    totalB += b;
+                    
+                    // Calculate brightness (perceived luminance)
+                    const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                    totalBrightness += brightness;
+                    
+                    // Calculate saturation
+                    const max = Math.max(r, g, b);
+                    const min = Math.min(r, g, b);
+                    const saturation = max === 0 ? 0 : (max - min) / max;
+                    totalSaturation += saturation;
+                    
+                    // Track dominant color channel for hue detection
+                    if (saturation > 0.15) {
+                        hueSum.r += r;
+                        hueSum.g += g;
+                        hueSum.b += b;
+                        hueSum.count++;
+                    }
+                    
+                    pixelCount++;
+                }
+            }
+            
+            const avgBrightness = totalBrightness / pixelCount;
+            const avgSaturation = totalSaturation / pixelCount;
+            const avgR = totalR / pixelCount;
+            const avgG = totalG / pixelCount;
+            const avgB = totalB / pixelCount;
+            
+            // Determine dominant hue from saturated pixels
+            let dominantHue = 'neutral';
+            if (hueSum.count > pixelCount * 0.1) {
+                const hR = hueSum.r / hueSum.count;
+                const hG = hueSum.g / hueSum.count;
+                const hB = hueSum.b / hueSum.count;
+                
+                if (hR > hG && hR > hB) {
+                    dominantHue = hR > hG + hB * 0.5 ? 'red' : 'orange';
+                } else if (hG > hR && hG > hB) {
+                    dominantHue = hG > hB * 1.2 ? 'green' : 'cyan';
+                } else if (hB > hR && hB > hG) {
+                    dominantHue = hB > hR * 1.2 ? 'blue' : 'purple';
+                } else if (hR > hB && hG > hB) {
+                    dominantHue = 'yellow';
+                } else if (hR > hG && hB > hG) {
+                    dominantHue = 'magenta';
+                }
+            }
+            
+            // Check for warm vs cool tones
+            const warmth = (avgR - avgB) / 255;
+            
+            return {
+                brightness: avgBrightness,
+                saturation: avgSaturation,
+                dominantHue,
+                warmth,
+                avgR, avgG, avgB
+            };
+        }
+
+            function selectStyleFromAnalysis(analysis) {
+                const { brightness, saturation, dominantHue, warmth } = analysis;
+                
+                // Decision tree for style selection
+                
+                // Very dark content
+                if (brightness < 0.25) {
+                    if (saturation > 0.3) {
+                        if (dominantHue === 'blue' || dominantHue === 'cyan') return 'ocean';
+                        if (dominantHue === 'green') return 'matrix';
+                        if (dominantHue === 'purple' || dominantHue === 'magenta') return 'cyberpunk';
+                        if (dominantHue === 'red' || dominantHue === 'orange') return 'ember';
+                        return 'neon';
+                    }
+                    return 'noir';
+                }
+                
+                // Very bright content
+                if (brightness > 0.7) {
+                    if (saturation < 0.15) return 'paper';
+                    if (warmth > 0.1) return 'arctic';
+                    return 'light';
+                }
+                
+                // Medium brightness with color
+                if (saturation > 0.25) {
+                    switch (dominantHue) {
+                        case 'blue':
+                        case 'cyan':
+                            return 'ocean';
+                        case 'green':
+                            return 'forest';
+                        case 'red':
+                            return 'cherry';
+                        case 'orange':
+                        case 'yellow':
+                            return warmth > 0.15 ? 'sunset' : 'ember';
+                        case 'purple':
+                        case 'magenta':
+                            return 'lavender';
+                        default:
+                            return warmth > 0 ? 'coffee' : 'slate';
+                    }
+                }
+                
+                // Low saturation (grayscale-ish)
+                if (saturation < 0.1) {
+                    if (brightness < 0.4) return 'monochrome';
+                    if (brightness > 0.6) return 'minimal';
+                    return 'slate';
+                }
+                
+                // Default medium cases
+                if (warmth > 0.1) return 'sepia';
+                if (warmth < -0.1) return 'midnight';
+                
+                return 'dark';
+            }
+
+            function applyAutoStyle(canvas) {
+                if (!autoStyleToggle.checked) return;
+                
+                const analysis = analyzeCanvasColors(canvas);
+                const selectedPreset = selectStyleFromAnalysis(analysis);
+                const preset = outputPresets[selectedPreset];
+                
+                if (preset) {
+                    outputBgColor.value = preset.bg;
+                    outputTitleColor.value = preset.title;
+                    outputMetaColor.value = preset.meta;
+                    outputTimestampBg.value = preset.tsBg;
+                    outputTimestampColor.value = preset.tsColor;
+                    
+                    autoStyleIndicator.textContent = `✓ "${selectedPreset}" selected`;
+                    autoStyleIndicator.style.display = 'inline';
+                    
+                    console.log('Auto-style analysis:', analysis);
+                    console.log('Selected preset:', selectedPreset);
+                }
+            }
+
         // --- Resolution Detection Helpers ---
         const resolutionCategories = [
             { name: '8K', minWidth: 7680, scale: '0.05' },
@@ -1821,6 +2003,7 @@
             }
 
             videoFile = file;
+            autoStyleIndicator.style.display = 'none';
             
             // Set Title Default
             const title = file.name.replace(/\.[^/.]+$/, "");
@@ -1999,6 +2182,11 @@
             for (let i = 0; i < gridData.length; i++) {
                 statusEl.textContent = `Capturing frame ${i+1}/${totalThumbnails}...`;
                 await captureFrame(gridData[i].time, gridData[i].canvas);
+                
+                // Auto-select style based on first thumbnail
+                if (i === 0) {
+                    applyAutoStyle(gridData[0].canvas);
+                }
             }
 
             statusEl.textContent = "Generation Complete. Adjust details below, then click Download.";
