@@ -917,16 +917,19 @@
                     <div class="control-group">
                         <label>Font Family</label>
                         <select id="outputFontFamily">
-                            <option value="Segoe UI, Arial, sans-serif">Segoe UI</option>
-                            <option value="Arial, Helvetica, sans-serif">Arial</option>
                             <option value="Helvetica Neue, Helvetica, sans-serif">Helvetica</option>
+                            <option value="Impact, sans-serif">Impact</option>
+                            <option value="Trebuchet MS, sans-serif">Trebuchet MS</option>
+                            <option value="Courier New, monospace">Courier New</option>
+                            <option value="Segoe UI, Arial, sans-serif">Segoe UI</option>
+                            <option value="Verdana, sans-serif">Verdana</option>
                             <option value="Georgia, serif">Georgia</option>
                             <option value="Times New Roman, serif">Times New Roman</option>
-                            <option value="Courier New, monospace">Courier New</option>
-                            <option value="Verdana, sans-serif">Verdana</option>
-                            <option value="Trebuchet MS, sans-serif">Trebuchet MS</option>
-                            <option value="Impact, sans-serif">Impact</option>
+                            <option value="Arial, Helvetica, sans-serif">Arial</option>
+                            <option value="custom">Custom (Upload...)</option>
                         </select>
+                        <input type="file" id="customFontInput" accept=".ttf,.otf,.woff,.woff2" style="display: none;">
+                        <span id="customFontName" style="font-size: 0.75rem; color: var(--success-color); display: none; margin-top: 4px;"></span>
                     </div>
                     <div class="control-group">
                         <label>Title Weight</label>
@@ -1160,6 +1163,8 @@
         const outputShowTimestamps = document.getElementById('outputShowTimestamps');
         const outputRoundedCorners = document.getElementById('outputRoundedCorners');
         const presetChips = document.querySelectorAll('.preset-chip');
+        const customFontInput = document.getElementById('customFontInput');
+        const customFontName = document.getElementById('customFontName');
 
         // Collapsible
         const outputStyleHeader = document.getElementById('outputStyleHeader');
@@ -1193,6 +1198,8 @@
             codec: '',
             resolutionCategory: ''
         };
+        let customFontFamily = null;
+        let customFontLoaded = false;
 
         // --- Output Style Presets ---
         const outputPresets = {
@@ -1550,7 +1557,6 @@
             outputStyleContent.classList.toggle('collapsed');
         });
 
-        // Output Presets
         presetChips.forEach(chip => {
             chip.addEventListener('click', () => {
                 const presetName = chip.dataset.preset;
@@ -1565,6 +1571,54 @@
             });
         });
 
+        // Custom Font Handling
+        outputFontFamily.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                customFontInput.click();
+            } else {
+                customFontName.style.display = 'none';
+            }
+        });
+
+        customFontInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+                if (!customFontLoaded) {
+                    outputFontFamily.value = 'Helvetica Neue, Helvetica, sans-serif';
+                }
+                return;
+            }
+
+            const fontName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9]/g, '');
+            const customFontFaceName = `CustomFont_${fontName}`;
+
+            try {
+                statusEl.textContent = `Loading font: ${file.name}...`;
+
+                const fontData = await file.arrayBuffer();
+                const fontFace = new FontFace(customFontFaceName, fontData);
+
+                await fontFace.load();
+                document.fonts.add(fontFace);
+
+                customFontFamily = customFontFaceName;
+                customFontLoaded = true;
+
+                customFontName.textContent = `✓ ${file.name}`;
+                customFontName.style.display = 'block';
+
+                statusEl.textContent = `Font loaded: ${file.name}`;
+            } catch (err) {
+                console.error('Font loading error:', err);
+                alert(`Failed to load font: ${err.message}`);
+                outputFontFamily.value = 'Helvetica Neue, Helvetica, sans-serif';
+                customFontFamily = null;
+                customFontLoaded = false;
+                customFontName.style.display = 'none';
+                statusEl.textContent = 'Font loading failed. Using default font.';
+            }
+        });
+        
         scaleChips.forEach(chip => {
             chip.addEventListener('click', () => {
                 scaleChips.forEach(c => c.classList.remove('active', 'recommended'));
@@ -1908,7 +1962,9 @@
             const metaColor = outputMetaColor.value;
             const tsBgColor = outputTimestampBg.value;
             const tsTextColor = outputTimestampColor.value;
-            const fontFamily = outputFontFamily.value;
+            const fontFamily = outputFontFamily.value === 'custom' && customFontLoaded
+                ? customFontFamily
+                : outputFontFamily.value;
             const titleWeight = outputTitleWeight.value;
             const gapMultiplier = parseInt(outputGridGap.value);
             const showTimestamps = outputShowTimestamps.checked;
