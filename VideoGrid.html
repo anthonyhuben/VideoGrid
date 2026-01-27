@@ -875,6 +875,77 @@
         #outputFontFamily option[value="ui-sans-serif, system-ui, sans-serif"] { font-family: ui-sans-serif, system-ui, sans-serif; }
         #outputFontFamily option[value="ui-serif, Georgia, serif"] { font-family: ui-serif, Georgia, serif; }
         #outputFontFamily option[value="ui-monospace, monospace"] { font-family: ui-monospace, monospace; }
+
+        /* --- Sticker Library & Dragging --- */
+        .sticker-library {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px;
+            margin-top: 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            height: 60px;
+            align-items: center;
+        }
+
+        .sticker-item {
+            font-size: 28px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.2s;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .sticker-item:hover {
+            transform: scale(1.2);
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Container to hold canvas and overlay together */
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+        }
+
+        /* Overlay for placed stickers */
+        #stickerOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Let clicks pass through to canvas if needed, though we usually drag stickers */
+            overflow: hidden;
+        }
+
+        /* The actual draggable sticker on the canvas */
+        .placed-sticker {
+            position: absolute;
+            font-size: 32px;
+            cursor: move;
+            user-select: none;
+            pointer-events: auto;
+            text-shadow: 0px 0px 2px rgba(0,0,0,0.5);
+            line-height: 1;
+            transform: translate(-50%, -50%); /* Center on cursor */
+        }
+
+        .placed-sticker:hover {
+            outline: 2px dashed var(--accent-color);
+            border-radius: 50%;
+        }
+
+        /* --- Sticker Selection State --- */
+        .placed-sticker.sticker-selected {
+            outline: 2px dashed var(--accent-color);
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
     </style>
 </head>
 <body data-theme="ocean">
@@ -1301,8 +1372,42 @@
 
     <div class="modal" id="editModal">
         <div class="modal-content">
+            <!-- ... existing modal content ... -->
             <h3 style="margin-top: 0; color: inherit;">Fine-Tune Frame</h3>
-            <canvas id="editCanvas"></canvas>
+
+            <!-- Canvas Wrapper for Overlay -->
+            <div class="canvas-wrapper" id="canvasWrapper">
+                <canvas id="editCanvas"></canvas>
+                <div id="stickerOverlay"></div>
+            </div>
+
+            <!-- Sticker Library -->
+            <div class="sticker-library" id="stickerLibrary">
+                <span class="sticker-item" title="Fire">🔥</span>
+                <span class="sticker-item" title="Star">⭐</span>
+                <span class="sticker-item" title="Thumbs Up">👍</span>
+                <span class="sticker-item" title="Heart">❤️</span>
+                <span class="sticker-item" title="Laugh">😂</span>
+                <span class="sticker-item" title="Mind Blown">🤯</span>
+                <span class="sticker-item" title="Check">✅</span>
+                <span class="sticker-item" title="Cross">❌</span>
+                <span class="sticker-item" title="Arrow Up">⬆️</span>
+                <span class="sticker-item" title="Arrow Down">⬇️</span>
+                <span class="sticker-item" title="Zoom">🔍</span>
+                <span class="sticker-item" title="Bulb">💡</span>
+                <span class="sticker-item" title="Skull">💀</span>
+                <span class="sticker-item" title="Alien">👽</span>
+                <span class="sticker-item" title="Robot">🤖</span>
+                <span class="sticker-item" title="Eyes">👀</span>
+                <span class="sticker-item" title="Speech Bubble">💬</span>
+            </div>
+
+            <!-- Emoji Size Slider -->
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 5px 0;">
+                <label for="emojiSizeSlider" style="font-size: 0.8rem; margin: 0; min-width: 80px;">Emoji Size</label>
+                <input type="range" id="emojiSizeSlider" min="50" max="800" step="50" value="400" style="flex-grow: 1;">
+                <span id="emojiSizeValue" style="font-size: 0.8rem; min-width: 60px; font-family: monospace;">400%</span>
+            </div>
             
             <div class="time-controls">
                 <span id="startTimeLabel" style="font-family: monospace; color: var(--text-muted);">00:00</span>
@@ -2655,7 +2760,45 @@
                 data.textOverlayEl.style.display = 'none';
             }
             
+            // 1. Capture the Video Frame
             await captureFrame(newTime, data.canvas);
+            
+            // 2. Draw Stickers onto the canvas
+            const ctx = data.canvas.getContext('2d');
+            const wrapper = document.getElementById('canvasWrapper');
+            const wrapperRect = wrapper.getBoundingClientRect();
+            
+            // Calculate ratio between displayed size and actual canvas size
+            const scaleX = data.canvas.width / wrapperRect.width;
+            const scaleY = data.canvas.height / wrapperRect.height;
+            
+            const stickers = stickerOverlay.querySelectorAll('.placed-sticker');
+            stickers.forEach(sticker => {
+                const sRect = sticker.getBoundingClientRect();
+                
+                // --- CORRECTED POSITION LOGIC ---
+                // Calculate the Center of the sticker relative to the wrapper
+                const centerX = (sRect.left - wrapperRect.left) + (sRect.width / 2);
+                const centerY = (sRect.top - wrapperRect.top) + (sRect.height / 2);
+                
+                // Convert to Canvas coordinates (using center point)
+                const x = centerX * scaleX;
+                const y = centerY * scaleY;
+                
+                // Get actual font size
+                const domFontSize = parseFloat(window.getComputedStyle(sticker).fontSize);
+                const fontSize = domFontSize * scaleX; 
+                // ------------------------------
+                
+                ctx.font = `${fontSize}px serif`; 
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle'; // Use middle to align with the calculated center
+                ctx.fillText(sticker.innerText, x, y);
+            });
+            
+            // 3. Clean up DOM stickers (remove them so they don't persist for next edit)
+            stickerOverlay.innerHTML = '';
+
             closeModal();
         });
 
@@ -2900,6 +3043,131 @@
                 statusEl.textContent = `Download started! (${formatBytes(blob.size)})`;
             }, format, quality);
         });
+
+        // --- Sticker Logic ---
+
+        const stickerLibrary = document.getElementById('stickerLibrary');
+        const stickerOverlay = document.getElementById('stickerOverlay');
+        let activeSticker = null;
+        let initialX;
+        let initialY;
+        let currentX;
+        let currentY;
+        let xOffset = 0;
+        let yOffset = 0;
+
+        // Add Sticker to Canvas
+        stickerLibrary.addEventListener('click', (e) => {
+            if (e.target.classList.contains('sticker-item')) {
+                const emoji = e.target.innerText;
+                
+                // Create sticker element
+                const el = document.createElement('div');
+                el.classList.add('placed-sticker');
+                el.innerText = emoji;
+                
+                // --- Calculate Size based on Slider ---
+                const slider = document.getElementById('emojiSizeSlider');
+                const scalePercent = parseInt(slider.value);
+                const baseSize = 32; // Matches CSS default
+                const newSize = baseSize * (scalePercent / 100);
+                el.style.fontSize = `${newSize}px`;
+                // -------------------------------------
+
+                // Place in center of wrapper initially
+                const wrapper = document.getElementById('canvasWrapper');
+                el.style.left = (wrapper.clientWidth / 2) + 'px';
+                el.style.top = (wrapper.clientHeight / 2) + 'px';
+                
+                // Add double-click to remove
+                el.addEventListener('dblclick', function() {
+                    this.remove();
+                });
+                
+                // Add drag listeners
+                el.addEventListener('mousedown', dragStart);
+                
+                // Add Wheel listener for resizing
+                el.addEventListener('wheel', handleStickerWheel);
+
+                // --- Emoji Size Slider UI Update ---
+                const emojiSizeSlider = document.getElementById('emojiSizeSlider');
+                const emojiSizeValue = document.getElementById('emojiSizeValue');
+
+                emojiSizeSlider.addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    const label = val === '100' ? '100%' : `${val}%`;
+                    emojiSizeValue.innerText = label;
+                });
+                
+                stickerOverlay.appendChild(el);
+            }
+        });
+
+        // Drag Functions
+        function dragStart(e) {
+            activeSticker = e.target;
+            
+            // --- VISUAL SELECTION ---
+            // Remove 'selected' class from all other stickers
+            document.querySelectorAll('.placed-sticker').forEach(s => s.classList.remove('sticker-selected'));
+            // Add 'selected' class to the clicked one
+            activeSticker.classList.add('sticker-selected');
+            // -------------------------
+
+            // Get current element positions
+            const rect = activeSticker.getBoundingClientRect();
+            // We calculate offset based on where the mouse clicked inside the element
+            initialX = e.clientX - rect.left; 
+            initialY = e.clientY - rect.top;
+
+            document.addEventListener('mouseup', dragEnd);
+            document.addEventListener('mousemove', drag);
+        }
+
+        function drag(e) {
+            if (activeSticker) {
+                e.preventDefault();
+                
+                const wrapper = document.getElementById('canvasWrapper');
+                const wrapperRect = wrapper.getBoundingClientRect();
+                
+                // Calculate new position relative to wrapper
+                currentX = e.clientX - wrapperRect.left - initialX + (activeSticker.clientWidth / 2);
+                currentY = e.clientY - wrapperRect.top - initialY + (activeSticker.clientHeight / 2);
+
+                // Apply position
+                activeSticker.style.left = currentX + "px";
+                activeSticker.style.top = currentY + "px";
+            }
+        }
+
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            activeSticker = null;
+            document.removeEventListener('mouseup', dragEnd);
+            document.removeEventListener('mousemove', drag);
+        }
+
+        // --- Sticker Resize Handler ---
+        function handleStickerWheel(e) {
+            e.preventDefault();
+            const sticker = e.target;
+            
+            // Get current computed size
+            let currentSize = parseFloat(window.getComputedStyle(sticker).fontSize);
+            
+            // Determine direction (scroll up = larger, down = smaller)
+            const delta = Math.sign(e.deltaY) * -2;
+            let newSize = currentSize + delta;
+
+            // Clamp size limits (Min 10px, Max 150px)
+            if (newSize < 10) newSize = 10;
+            if (newSize > 150) newSize = 150;
+
+            sticker.style.fontSize = `${newSize}px`;
+        }
 
         // --- Helper Functions ---
         
