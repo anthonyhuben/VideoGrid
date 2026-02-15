@@ -139,7 +139,6 @@ cd VideoGrid
 ```
 
 ### Basic Usage (3 Simple Steps)
-
 #### Step 1: Load Your Video
 1. Click **"Choose Video File"** button
 2. Select any video file from your computer
@@ -155,6 +154,26 @@ cd VideoGrid
 2. **Optional**: Choose a color preset from the **🎨 Output Image Style** section
 3. **Select format**: WebP (recommended), PNG, or JPEG
 4. **Click Download Image**: Your contact sheet will be saved to your downloads folder
+
+## 🖥️ Native macOS App
+
+A lightweight Swift/WebKit wrapper loads `VideoGrid.html` inside a native window and keeps the same privacy-first behavior while giving you a downloadable macOS experience.
+
+### Requirements
+- macOS 11.0 or newer with Xcode command line tools installed (`swiftc`, `hdiutil`).
+- Keep `VideoGrid.html` at the project root; the build script copies it directly into the app bundle.
+- Install Python 3 + Pillow (`pip install pillow`) so you can run `scripts/generate-icon.py` to refresh `packaging/VideoGrid.icns` (the icon is copied into the bundle automatically).
+
+### Build & Packaging
+1. Run `./scripts/build-app.sh` to compile `src/main.swift`, bundle `VideoGrid.html`, and generate `build/VideoGrid.app`.
+2. Run `./scripts/create-dmg.sh` to package that app bundle into `dist/VideoGrid-Installer.dmg`. The script also adds an `Applications` shortcut so end users can drag & drop.
+3. Open the DMG (`open dist/VideoGrid-Installer.dmg`) or copy `build/VideoGrid.app` into `/Applications` for internal testing.
+
+After you edit the HTML or styles, rerun `./scripts/build-app.sh` before rebuilding the DMG so the latest assets are included.
+
+If you want to update the Finder icon, run `python3 scripts/generate-icon.py` (requires `iconutil`). The generated `packaging/VideoGrid.icns` will be bundled automatically on the next build.
+
+## 📚 User Guide
 
 ---
 
