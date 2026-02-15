@@ -3094,8 +3094,13 @@
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = `${videoTitleEdit.value.replace(/\s+/g, '_')}_grid.${ext}`;
+                a.style.display = 'none';
+                document.body.appendChild(a);
                 a.click();
-                URL.revokeObjectURL(url);
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }, 1500);
                 statusEl.textContent = `Download started! (${formatBytes(blob.size)})`;
             }, format, quality);
         });
